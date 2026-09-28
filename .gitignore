@@ -1,0 +1,6 @@
+*/bazel-*
+external
+target
+*.sw?
+MODULE.bazel.lock
+.bazelrc.user

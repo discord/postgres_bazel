@@ -1,0 +1,10 @@
+# Keep this file free of host-specific toolchain overrides: as a module, the
+# cc toolchain (and its linker) is the consumer's to choose.
+#
+# If your machine has an ld64.lld on PATH that rules_cc detects but that can't
+# handle --start-lib (LLD 16 from a nix profile segfaults on it in Mach-O
+# mode), put the workaround in .bazelrc.user, which is gitignored:
+#
+#   build --features=-supports_start_end_lib
+#   build --host_features=-supports_start_end_lib
+try-import %workspace%/.bazelrc.user
