@@ -48,10 +48,40 @@ Libraries:
 
 Binaries:
 
-* `psql`
+* `clusterdb`
+* `createdb`
+* `createuser`
+* `dropdb`
+* `dropuser`
 * `initdb`
+* `pg_amcheck`
+* `pg_archivecleanup`
+* `pg_basebackup`
+* `pg_checksums`
+* `pg_combinebackup` (17+)
+* `pg_config`
+* `pg_controldata`
+* `pg_createsubscriber` (17+)
 * `pg_ctl`
+* `pg_dump`
+* `pg_dumpall`
+* `pg_isready`
+* `pg_receivewal`
+* `pg_recvlogical`
+* `pg_resetwal`
+* `pg_restore`
+* `pg_rewind`
+* `pg_test_fsync`
+* `pg_test_timing`
+* `pg_upgrade`
+* `pg_verifybackup`
+* `pg_waldump`
+* `pg_walsummary` (17+)
+* `pgbench`
 * `postgres`
+* `psql`
+* `reindexdb`
+* `vacuumdb`
 
 For using each of these binaries as tools or via `bazel run`, use the `_bin` suffixed version of each of those targets. They pull all dependent files in as runfiles, ensure that postgres has its expected path layout, and executes the binary in the right bazel configuration.
 

@@ -74,7 +74,7 @@ def _postgres_impl(module_ctx):
                 version = tag.version,
             )
             created.append(name)
-            repo_for_version.setdefault(tag.version, name)
+            repo_for_version.setdefault(tag.version, (name, major))
 
     for module in module_ctx.modules:
         for tag in module.tags.default_version:
@@ -85,9 +85,11 @@ def _postgres_impl(module_ctx):
                     tag.version,
                     ", ".join(sorted(repo_for_version)),
                 ))
+            target_repo, major = repo_for_version[tag.version]
             postgres_default_repo(
                 name = tag.repo_name,
-                target_repo = repo_for_version[tag.version],
+                major = major,
+                target_repo = target_repo,
             )
             created.append(tag.repo_name)
 

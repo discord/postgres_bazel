@@ -1344,6 +1344,7 @@ _LIBCOMMON_TOOLS = [
     "src/common/fe_memutils.c",
     "src/common/file_perm.c",
     "src/common/file_utils.c",
+    "src/common/hashfn.c",
     "src/common/ip.c",
     "src/common/jsonapi.c",
     "src/common/keywords.c",
@@ -1573,7 +1574,7 @@ cc_library(
 # fe_memutils.c #error out under backend compilation, and restricted_token.c
 # and sprompt.c are frontend utilities. Everything else is upstream's
 # common_sources, same as the tools build.
-_LIBCOMMON_SRV = ["src/common/hashfn.c"] + [
+_LIBCOMMON_SRV = [
     f
     for f in _LIBCOMMON_TOOLS
     if f not in [
@@ -1779,6 +1780,261 @@ cc_binary(
     ],
 )
 
+_FRONTEND_DEFINES = ["FRONTEND"] + select({
+    "@platforms//os:linux": ["_GNU_SOURCE"],
+    "//conditions:default": [],
+})
+
+_FRONTEND_DEPS = [
+    ":include",
+    ":pgcommon_tools",
+    ":pgfeutils",
+    ":pgport",
+    ":pq",
+]
+
+[
+    cc_binary(
+        name = tool,
+        srcs = ["src/bin/{0}/{0}.c".format(tool)],
+        local_defines = _FRONTEND_DEFINES,
+        visibility = ["//visibility:public"],
+        deps = _FRONTEND_DEPS,
+    )
+    for tool in [
+        "pg_amcheck",
+        "pg_archivecleanup",
+        "pg_checksums",
+        "pg_controldata",
+        "pg_resetwal",
+        "pg_test_fsync",
+        "pg_test_timing",
+        "pg_walsummary",
+    ]
+]
+
+cc_binary(
+    name = "pg_config",
+    srcs = [
+        "src/bin/pg_config/pg_config.c",
+        "src/common/config_info.c",
+    ],
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+[
+    cc_binary(
+        name = tool,
+        srcs = [
+            "src/bin/scripts/common.c",
+            "src/bin/scripts/common.h",
+            "src/bin/scripts/%s.c" % tool,
+        ],
+        local_defines = _FRONTEND_DEFINES,
+        visibility = ["//visibility:public"],
+        deps = _FRONTEND_DEPS,
+    )
+    for tool in [
+        "clusterdb",
+        "createdb",
+        "createuser",
+        "dropdb",
+        "dropuser",
+        "pg_isready",
+        "reindexdb",
+        "vacuumdb",
+    ]
+]
+
+cc_binary(
+    name = "pg_combinebackup",
+    srcs = [
+        "src/bin/pg_combinebackup/backup_label.c",
+        "src/bin/pg_combinebackup/copy_file.c",
+        "src/bin/pg_combinebackup/load_manifest.c",
+        "src/bin/pg_combinebackup/pg_combinebackup.c",
+        "src/bin/pg_combinebackup/reconstruct.c",
+        "src/bin/pg_combinebackup/write_manifest.c",
+    ] + glob(["src/bin/pg_combinebackup/*.h"]),
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+cc_binary(
+    name = "pg_createsubscriber",
+    srcs = ["src/bin/pg_basebackup/pg_createsubscriber.c"],
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+cc_library(
+    name = "pgdump_common",
+    srcs = [
+        "src/bin/pg_dump/compress_gzip.c",
+        "src/bin/pg_dump/compress_io.c",
+        "src/bin/pg_dump/compress_lz4.c",
+        "src/bin/pg_dump/compress_none.c",
+        "src/bin/pg_dump/compress_zstd.c",
+        "src/bin/pg_dump/dumputils.c",
+        "src/bin/pg_dump/filter.c",
+        "src/bin/pg_dump/parallel.c",
+        "src/bin/pg_dump/pg_backup_archiver.c",
+        "src/bin/pg_dump/pg_backup_custom.c",
+        "src/bin/pg_dump/pg_backup_db.c",
+        "src/bin/pg_dump/pg_backup_directory.c",
+        "src/bin/pg_dump/pg_backup_null.c",
+        "src/bin/pg_dump/pg_backup_tar.c",
+        "src/bin/pg_dump/pg_backup_utils.c",
+    ],
+    hdrs = glob(["src/bin/pg_dump/*.h"]),
+    local_defines = _FRONTEND_DEFINES,
+    deps = _FRONTEND_DEPS,
+)
+
+cc_binary(
+    name = "pg_dump",
+    srcs = [
+        "src/bin/pg_dump/common.c",
+        "src/bin/pg_dump/pg_dump.c",
+        "src/bin/pg_dump/pg_dump_sort.c",
+    ],
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS + [":pgdump_common"],
+)
+
+[
+    cc_binary(
+        name = tool,
+        srcs = ["src/bin/pg_dump/%s.c" % tool],
+        local_defines = _FRONTEND_DEFINES,
+        visibility = ["//visibility:public"],
+        deps = _FRONTEND_DEPS + [":pgdump_common"],
+    )
+    for tool in [
+        "pg_dumpall",
+        "pg_restore",
+    ]
+]
+
+cc_library(
+    name = "pg_basebackup_common",
+    srcs = [
+        "src/bin/pg_basebackup/bbstreamer_file.c",
+        "src/bin/pg_basebackup/bbstreamer_gzip.c",
+        "src/bin/pg_basebackup/bbstreamer_inject.c",
+        "src/bin/pg_basebackup/bbstreamer_lz4.c",
+        "src/bin/pg_basebackup/bbstreamer_tar.c",
+        "src/bin/pg_basebackup/bbstreamer_zstd.c",
+        "src/bin/pg_basebackup/receivelog.c",
+        "src/bin/pg_basebackup/streamutil.c",
+        "src/bin/pg_basebackup/walmethods.c",
+    ],
+    hdrs = glob(["src/bin/pg_basebackup/*.h"]),
+    local_defines = _FRONTEND_DEFINES,
+    deps = _FRONTEND_DEPS,
+)
+
+[
+    cc_binary(
+        name = tool,
+        srcs = ["src/bin/pg_basebackup/%s.c" % tool],
+        local_defines = _FRONTEND_DEFINES,
+        visibility = ["//visibility:public"],
+        deps = _FRONTEND_DEPS + [":pg_basebackup_common"],
+    )
+    for tool in [
+        "pg_basebackup",
+        "pg_receivewal",
+        "pg_recvlogical",
+    ]
+]
+
+cc_binary(
+    name = "pg_rewind",
+    srcs = [
+        "src/backend/access/transam/xlogreader.c",
+        "src/bin/pg_rewind/datapagemap.c",
+        "src/bin/pg_rewind/file_ops.c",
+        "src/bin/pg_rewind/filemap.c",
+        "src/bin/pg_rewind/libpq_source.c",
+        "src/bin/pg_rewind/local_source.c",
+        "src/bin/pg_rewind/parsexlog.c",
+        "src/bin/pg_rewind/pg_rewind.c",
+        "src/bin/pg_rewind/timeline.c",
+    ] + glob(["src/bin/pg_rewind/*.h"]),
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+cc_binary(
+    name = "pg_upgrade",
+    srcs = [
+        "src/bin/pg_upgrade/check.c",
+        "src/bin/pg_upgrade/controldata.c",
+        "src/bin/pg_upgrade/dump.c",
+        "src/bin/pg_upgrade/exec.c",
+        "src/bin/pg_upgrade/file.c",
+        "src/bin/pg_upgrade/function.c",
+        "src/bin/pg_upgrade/info.c",
+        "src/bin/pg_upgrade/option.c",
+        "src/bin/pg_upgrade/parallel.c",
+        "src/bin/pg_upgrade/pg_upgrade.c",
+        "src/bin/pg_upgrade/relfilenumber.c",
+        "src/bin/pg_upgrade/server.c",
+        "src/bin/pg_upgrade/tablespace.c",
+        "src/bin/pg_upgrade/util.c",
+        "src/bin/pg_upgrade/version.c",
+    ] + glob(["src/bin/pg_upgrade/*.h"]),
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+cc_binary(
+    name = "pg_verifybackup",
+    srcs = ["src/bin/pg_verifybackup/pg_verifybackup.c"],
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+cc_binary(
+    name = "pg_waldump",
+    srcs = [
+        "src/backend/access/transam/xlogreader.c",
+        "src/backend/access/transam/xlogstats.c",
+        "src/bin/pg_waldump/compat.c",
+        "src/bin/pg_waldump/pg_waldump.c",
+        "src/bin/pg_waldump/rmgrdesc.c",
+    ] + glob([
+        "src/backend/access/rmgrdesc/*.c",
+        "src/bin/pg_waldump/*.h",
+    ]),
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
+cc_binary(
+    name = "pgbench",
+    srcs = [
+        "src/bin/pgbench/exprparse.c",
+        "src/bin/pgbench/exprparse.h",
+        "src/bin/pgbench/exprscan.c",
+        "src/bin/pgbench/pgbench.c",
+        "src/bin/pgbench/pgbench.h",
+    ],
+    local_defines = _FRONTEND_DEFINES,
+    visibility = ["//visibility:public"],
+    deps = _FRONTEND_DEPS,
+)
+
 # zic compiles the timezone database into the TZif files the server and initdb
 # read at runtime. It's a build-time tool, so it's always built for the exec
 # platform.
@@ -1873,6 +2129,43 @@ cp $(execpath :plpgsql) {out}/plpgsql$S
     ],
 )
 
+_DIST_BINARIES = [
+    "clusterdb",
+    "createdb",
+    "createuser",
+    "dropdb",
+    "dropuser",
+    "initdb",
+    "pg_amcheck",
+    "pg_archivecleanup",
+    "pg_basebackup",
+    "pg_checksums",
+    "pg_combinebackup",
+    "pg_config",
+    "pg_controldata",
+    "pg_createsubscriber",
+    "pg_ctl",
+    "pg_dump",
+    "pg_dumpall",
+    "pg_isready",
+    "pg_receivewal",
+    "pg_recvlogical",
+    "pg_resetwal",
+    "pg_restore",
+    "pg_rewind",
+    "pg_test_fsync",
+    "pg_test_timing",
+    "pg_upgrade",
+    "pg_verifybackup",
+    "pg_waldump",
+    "pg_walsummary",
+    "pgbench",
+    "postgres",
+    "psql",
+    "reindexdb",
+    "vacuumdb",
+]
+
 # Assembles bin/ and share/ as siblings. This layout is not cosmetic:
 # get_share_path() derives PGSHAREDIR by walking up from the running
 # executable, and only does so when the binary's directory is named "bin".
@@ -1882,21 +2175,20 @@ directory_output(
     cmd = """
 set -e
 mkdir -p {out}/bin {out}/share/timezonesets {out}/share/extension {out}/lib
-cp $(execpath :initdb) $(execpath :pg_ctl) $(execpath :postgres) $(execpath :psql) {out}/bin/
+cp DIST_BINARIES {out}/bin/
 for f in SHARE_FILES; do cp "$f" {out}/share/; done
 for f in $(execpaths :tznames); do cp "$f" {out}/share/timezonesets/; done
 cp -R $(execpath :tzdata) {out}/share/timezone
 cp -R $(execpath :pg_lib)/. {out}/lib/
 cp $(execpath src/pl/plpgsql/src/plpgsql.control) \
    $(execpath src/pl/plpgsql/src/plpgsql--1.0.sql) {out}/share/extension/
-""".replace("SHARE_FILES", " ".join(["$(execpath %s)" % f for f in _SHARE_FILES])),
+""".replace("SHARE_FILES", " ".join(["$(execpath %s)" % f for f in _SHARE_FILES])).replace(
+        "DIST_BINARIES",
+        " ".join(["$(execpath :%s)" % b for b in _DIST_BINARIES]),
+    ),
     dirname = "dist",
-    srcs = _SHARE_FILES + [
-        ":initdb",
-        ":pg_ctl",
-        ":postgres",
+    srcs = _SHARE_FILES + [":" + b for b in _DIST_BINARIES] + [
         ":pg_lib",
-        ":psql",
         "src/pl/plpgsql/src/plpgsql--1.0.sql",
         "src/pl/plpgsql/src/plpgsql.control",
         ":tzdata",
@@ -1921,10 +2213,5 @@ filegroup(
         dist = ":pg_dist",
         visibility = ["//visibility:public"],
     )
-    for binary in [
-        "initdb",
-        "pg_ctl",
-        "postgres",
-        "psql",
-    ]
+    for binary in _DIST_BINARIES
 ]

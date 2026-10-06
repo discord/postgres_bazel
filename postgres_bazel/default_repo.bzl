@@ -2,12 +2,19 @@
 
 def _postgres_default_repo_impl(repository_ctx):
     template = repository_ctx.read(repository_ctx.attr._build_file)
-    repository_ctx.file("BUILD.bazel", template.replace("{repo}", repository_ctx.attr.target_repo))
+    repository_ctx.file("BUILD.bazel", template.replace(
+        "{repo}",
+        repository_ctx.attr.target_repo,
+    ).replace(
+        "{major}",
+        repository_ctx.attr.major,
+    ))
 
 postgres_default_repo = repository_rule(
     implementation = _postgres_default_repo_impl,
     doc = "Aliases every public target of a versioned postgres repository.",
     attrs = {
+        "major": attr.string(mandatory = True, doc = "Major version of the versioned repository's template."),
         "target_repo": attr.string(mandatory = True, doc = "Apparent name of the versioned repository."),
         "_build_file": attr.label(default = "//templates:default/BUILD.bazel.template"),
     },

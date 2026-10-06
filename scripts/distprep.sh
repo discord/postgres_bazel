@@ -231,7 +231,8 @@ for y in src/backend/parser/gram \
          src/backend/replication/repl_gram \
          src/backend/replication/syncrep_gram \
          src/backend/utils/adt/jsonpath_gram \
-         src/pl/plpgsql/src/pl_gram; do
+         src/pl/plpgsql/src/pl_gram \
+         src/bin/pgbench/exprparse; do
     bison -d -o "${y}.c" "${y}.y"
     record "${y}.c" "${y}.h"
 done
@@ -248,6 +249,7 @@ flex_gen "-CF -p -p" src/backend/replication/syncrep_scanner
 flex_gen "-CF -p -p" src/backend/utils/misc/guc-file
 flex_gen "-Cfe -p -p" src/fe_utils/psqlscan
 flex_gen "-Cfe -p -p" src/bin/psql/psqlscanslash
+flex_gen "" src/bin/pgbench/exprscan
 
 sort -u "$MANIFEST" -o "$MANIFEST"
 
