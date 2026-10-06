@@ -37,6 +37,21 @@ PG_VERSION_NUM = "{version_num}"
 # repository's BUILD file for the full list.
 # ---------------------------------------------------------------------------
 
+_ZLIB_DEPS = select({
+    "@postgres_config//:zlib_on": ["@postgres_config//:zlib_lib"],
+    "//conditions:default": [],
+})
+
+_LZ4_DEPS = select({
+    "@postgres_config//:lz4_on": ["@postgres_config//:lz4_lib"],
+    "//conditions:default": [],
+})
+
+_ZSTD_DEPS = select({
+    "@postgres_config//:zstd_on": ["@postgres_config//:zstd_lib"],
+    "//conditions:default": [],
+})
+
 # Compiler-aware config_setting_groups so the autoconf rule below can emit
 # different defines on MSVC than on GCC/Clang. MSVC doesn't grok
 # `__int128`, GCC's `gnu_printf` format attribute, or x86_64 inline-asm
@@ -1402,7 +1417,7 @@ cc_library(
         # controldata_utils.c computes the control-file CRC.
         ":pgport_crc32c",
         ":ssl_backend",
-    ],
+    ] + _ZLIB_DEPS + _ZSTD_DEPS,
 )
 
 cc_library(
@@ -1606,7 +1621,7 @@ cc_library(
         ":include",
         ":pgport_srv",
         ":ssl_backend",
-    ],
+    ] + _ZLIB_DEPS + _ZSTD_DEPS,
 )
 
 # Sources that are #included into another .c rather than compiled on their
@@ -1692,7 +1707,7 @@ cc_library(
     ] + select({
         "@postgres_config//:gssapi_on": ["@postgres_config//:gssapi_lib"],
         "//conditions:default": [],
-    }),
+    }) + _LZ4_DEPS + _ZLIB_DEPS + _ZSTD_DEPS,
 )
 
 # localtime.c/pgtz.c/strftime.c, linked into the backend and (localtime.c
@@ -1892,7 +1907,7 @@ cc_library(
     ],
     hdrs = glob(["src/bin/pg_dump/*.h"]),
     local_defines = _FRONTEND_DEFINES,
-    deps = _FRONTEND_DEPS,
+    deps = _FRONTEND_DEPS + _LZ4_DEPS + _ZLIB_DEPS + _ZSTD_DEPS,
 )
 
 cc_binary(
@@ -1936,7 +1951,7 @@ cc_library(
     ],
     hdrs = glob(["src/bin/pg_basebackup/*.h"]),
     local_defines = _FRONTEND_DEFINES,
-    deps = _FRONTEND_DEPS,
+    deps = _FRONTEND_DEPS + _LZ4_DEPS + _ZLIB_DEPS + _ZSTD_DEPS,
 )
 
 [
@@ -1969,7 +1984,7 @@ cc_binary(
     ] + glob(["src/bin/pg_rewind/*.h"]),
     local_defines = _FRONTEND_DEFINES,
     visibility = ["//visibility:public"],
-    deps = _FRONTEND_DEPS,
+    deps = _FRONTEND_DEPS + _LZ4_DEPS + _ZSTD_DEPS,
 )
 
 cc_binary(
@@ -2018,7 +2033,7 @@ cc_binary(
     ]),
     local_defines = _FRONTEND_DEFINES,
     visibility = ["//visibility:public"],
-    deps = _FRONTEND_DEPS,
+    deps = _FRONTEND_DEPS + _LZ4_DEPS + _ZSTD_DEPS,
 )
 
 cc_binary(

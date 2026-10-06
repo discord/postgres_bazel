@@ -138,13 +138,16 @@ Available bazel flags are:
 * `--@postgres_config//:with_gssapi`: bool (default false)
 * `--@postgres_config//:with_krb_srvnam`: string (default postgres)
 * `--@postgres_config//:with_libcurl`: bool (default false)
-* `--@postgres_config//:with_lz4`: bool (default false)
+* `--@postgres_config//:lz4_lib`: label (default `@lz4//:lz4_frame`)
+* `--@postgres_config//:with_lz4`: bool (default true)
 * `--@postgres_config//:with_pgport`: int (default 5432)
 * `--@postgres_config//:with_readline`: bool (default false)
 * `--@postgres_config//:with_segsize`: int (default 1)
 * `--@postgres_config//:with_ssl`: One of `openssl` (default), `boringssl`, or `none`
 * `--@postgres_config//:with_wal_blocksize`: int (default 8). One of 2^{0..6}.
-* `--@postgres_config//:with_zlib`: bool (default false)
-* `--@postgres_config//:with_zstd`: bool (default false)
+* `--@postgres_config//:with_zlib`: bool (default true)
+* `--@postgres_config//:with_zstd`: bool (default true)
+* `--@postgres_config//:zlib_lib`: label (default `@zlib//:zlib`)
+* `--@postgres_config//:zstd_lib`: label (default `@zstd//:zstd`)
 
 `pg_config.h` comes from a real `rules_cc_autoconf` probe of upstream's `pg_config.h.in`, not a hand-maintained header. See the `:autoconf_probes` target in each postgres version's root.

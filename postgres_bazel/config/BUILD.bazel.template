@@ -92,17 +92,33 @@ cc_library(
 
 bool_flag(
     name = "with_zlib",
-    build_setting_default = False,
+    build_setting_default = True,
+)
+
+label_flag(
+    name = "zlib_lib",
+    build_setting_default = "@zlib//:zlib",
 )
 
 bool_flag(
     name = "with_lz4",
-    build_setting_default = False,
+    build_setting_default = True,
+)
+
+# Postgres uses the LZ4 frame API, which BCR's lz4 splits out of `:lz4`.
+label_flag(
+    name = "lz4_lib",
+    build_setting_default = "@lz4//:lz4_frame",
 )
 
 bool_flag(
     name = "with_zstd",
-    build_setting_default = False,
+    build_setting_default = True,
+)
+
+label_flag(
+    name = "zstd_lib",
+    build_setting_default = "@zstd//:zstd",
 )
 
 bool_flag(
