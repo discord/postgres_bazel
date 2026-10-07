@@ -32,6 +32,9 @@ src/backend/utils/fmgroids.h
 src/backend/utils/fmgrprotos.h
 src/backend/utils/fmgrtab.c
 src/backend/utils/misc/guc-file.c
+src/bin/pgbench/exprparse.c
+src/bin/pgbench/exprparse.h
+src/bin/pgbench/exprscan.c
 src/bin/psql/psqlscanslash.c
 src/bin/psql/sql_help.c
 src/bin/psql/sql_help.h
