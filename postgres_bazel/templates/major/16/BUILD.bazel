@@ -2075,6 +2075,33 @@ cc_binary(
     deps = [":include"],
 )
 
+cc_binary(
+    name = "hstore",
+    srcs = [
+        "contrib/hstore/hstore.h",
+        "contrib/hstore/hstore_compat.c",
+        "contrib/hstore/hstore_gin.c",
+        "contrib/hstore/hstore_gist.c",
+        "contrib/hstore/hstore_io.c",
+        "contrib/hstore/hstore_op.c",
+        "contrib/hstore/hstore_subs.c",
+    ],
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-undefined,dynamic_lookup"],
+        "//conditions:default": [],
+    }),
+    linkshared = True,
+    deps = [":include"],
+)
+
+filegroup(
+    name = "hstore_files",
+    srcs = glob([
+        "contrib/hstore/hstore--*.sql",
+        "contrib/hstore/hstore.control",
+    ]),
+)
+
 # Bazel names a linkshared cc_binary libfoo.so even on macOS; postgres looks
 # for the platform DLSUFFIX (.dylib there), so rename on the way in.
 directory_output(
@@ -2087,10 +2114,12 @@ set -e
 mkdir -p {out}
 cp $(execpath :dict_snowball) {out}/dict_snowball$S
 cp $(execpath :plpgsql) {out}/plpgsql$S
+cp $(execpath :hstore) {out}/hstore$S
 """,
     dirname = "lib",
     srcs = [
         ":dict_snowball",
+        ":hstore",
         ":plpgsql",
     ],
 )
@@ -2145,12 +2174,14 @@ cp -R $(execpath :tzdata) {out}/share/timezone
 cp -R $(execpath :pg_lib)/. {out}/lib/
 cp $(execpath src/pl/plpgsql/src/plpgsql.control) \
    $(execpath src/pl/plpgsql/src/plpgsql--1.0.sql) {out}/share/extension/
+cp $(execpaths :hstore_files) {out}/share/extension/
 """.replace("SHARE_FILES", " ".join(["$(execpath %s)" % f for f in _SHARE_FILES])).replace(
         "DIST_BINARIES",
         " ".join(["$(execpath :%s)" % b for b in _DIST_BINARIES]),
     ),
     dirname = "dist",
     srcs = _SHARE_FILES + [":" + b for b in _DIST_BINARIES] + [
+        ":hstore_files",
         ":pg_lib",
         "src/pl/plpgsql/src/plpgsql--1.0.sql",
         "src/pl/plpgsql/src/plpgsql.control",
