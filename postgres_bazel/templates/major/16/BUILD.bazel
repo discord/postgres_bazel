@@ -1632,6 +1632,7 @@ _BACKEND_EXCLUDES = _BACKEND_INCLUDED_SRCS + [
     "src/backend/port/win32/**",
     "src/backend/replication/libpqwalreceiver/**",
     "src/backend/replication/pgoutput/**",
+    "src/backend/snowball/dict_snowball.c",
     "src/backend/snowball/libstemmer/**",
     "src/backend/utils/mb/conversion_procs/**",
     # Standalone helpers that generate conversion tables; upstream's
@@ -1643,6 +1644,8 @@ _BACKEND_EXCLUDES = _BACKEND_INCLUDED_SRCS + [
 
 cc_library(
     name = "backend",
+    # Extensions call backend entry points that the server does not reference.
+    alwayslink = True,
     srcs = glob(
         ["src/backend/**/*.c"],
         exclude = _BACKEND_EXCLUDES,
@@ -2057,6 +2060,20 @@ cc_binary(
 )
 
 cc_binary(
+    name = "pg_trgm",
+    srcs = glob([
+        "contrib/pg_trgm/*.c",
+        "contrib/pg_trgm/*.h",
+    ]),
+    linkopts = select({
+        "@platforms//os:macos": ["-Wl,-undefined,dynamic_lookup"],
+        "//conditions:default": [],
+    }),
+    linkshared = True,
+    deps = [":include"],
+)
+
+cc_binary(
     name = "plpgsql",
     srcs = [
         "src/pl/plpgsql/src/pl_comp.c",
@@ -2115,12 +2132,14 @@ mkdir -p {out}
 cp $(execpath :dict_snowball) {out}/dict_snowball$S
 cp $(execpath :plpgsql) {out}/plpgsql$S
 cp $(execpath :hstore) {out}/hstore$S
+cp $(execpath :pg_trgm) {out}/pg_trgm$S
 """,
     dirname = "lib",
     srcs = [
         ":dict_snowball",
         ":hstore",
         ":plpgsql",
+        ":pg_trgm",
     ],
 )
 
@@ -2175,6 +2194,7 @@ cp -R $(execpath :pg_lib)/. {out}/lib/
 cp $(execpath src/pl/plpgsql/src/plpgsql.control) \
    $(execpath src/pl/plpgsql/src/plpgsql--1.0.sql) {out}/share/extension/
 cp $(execpaths :hstore_files) {out}/share/extension/
+for f in $(execpaths :pg_trgm_scripts); do cp "$f" {out}/share/extension/; done
 """.replace("SHARE_FILES", " ".join(["$(execpath %s)" % f for f in _SHARE_FILES])).replace(
         "DIST_BINARIES",
         " ".join(["$(execpath :%s)" % b for b in _DIST_BINARIES]),
@@ -2183,12 +2203,21 @@ cp $(execpaths :hstore_files) {out}/share/extension/
     srcs = _SHARE_FILES + [":" + b for b in _DIST_BINARIES] + [
         ":hstore_files",
         ":pg_lib",
+        ":pg_trgm_scripts",
         "src/pl/plpgsql/src/plpgsql--1.0.sql",
         "src/pl/plpgsql/src/plpgsql.control",
         ":tzdata",
         ":tznames",
     ],
     visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "pg_trgm_scripts",
+    srcs = glob([
+        "contrib/pg_trgm/*.sql",
+        "contrib/pg_trgm/*.control",
+    ]),
 )
 
 filegroup(
