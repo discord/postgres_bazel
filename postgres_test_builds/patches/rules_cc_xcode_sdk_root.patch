@@ -1,0 +1,29 @@
+--- a/cc/private/toolchain/unix_cc_configure.bzl
++++ b/cc/private/toolchain/unix_cc_configure.bzl
+@@ -160,6 +160,16 @@
+         path = path[:-_OSX_FRAMEWORK_SUFFIX_LEN].strip()
+     return path
+ 
++def _active_sdk_root(repository_ctx, darwin):
++    # Xcode 27.1's clang writes $SDKROOT/SDKSettings.json into -MD depfiles,
++    # which sits outside every directory `cc -E -v` reports.
++    if not darwin:
++        return []
++    result = repository_ctx.execute(["xcrun", "--show-sdk-path"])
++    if result.return_code != 0:
++        return []
++    return [result.stdout.strip()]
++
+ def _get_cxx_include_directories(repository_ctx, print_resource_dir_supported, cc, lang_flag, additional_flags = []):
+     """Compute the list of C++ include directories."""
+     result = repository_ctx.execute([cc, "-E", lang_flag, "-", "-v"] + additional_flags)
+@@ -653,7 +663,8 @@
+         ) +
+         # Always included in case the user has Xcode + the CLT installed, both
+         # paths can be used interchangeably
+-        (["/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"] if darwin else []),
++        (["/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"] if darwin else []) +
++        _active_sdk_root(repository_ctx, darwin),
+     )
+ 
+     generate_modulemap = is_clang

@@ -26,6 +26,13 @@ use_repo(sysroots, "sysroot_linux_amd64", "sysroot_linux_arm64")
 bazel_dep(name = "tar.bzl", version = "0.10.9")
 bazel_dep(name = "toolchains_llvm", version = "1.9.1")
 
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    patches = ["//patches:rules_cc_xcode_sdk_root.patch"],
+    version = "0.2.27",
+)
+
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
 
 _LLVM_TOOLCHAINS = [
