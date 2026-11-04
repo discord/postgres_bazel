@@ -140,7 +140,7 @@ Available bazel flags are:
 * `--@postgres_config//:with_libcurl`: bool (default false)
 * `--@postgres_config//:with_lz4`: bool (default false)
 * `--@postgres_config//:with_pgport`: int (default 5432)
-* `--@postgres_config//:with_readline`: bool (default false)
+* `--@postgres_config//:with_readline`: bool (default false). Links readline (BCR `readline`, GPL-3.0) into psql. Its BCR `ncurses` finds terminfo only in `/usr/share/terminfo`, `~/.terminfo`, `$TERMINFO` or `$TERMINFO_DIRS`; Debian and Ubuntu keep `xterm` in `/lib/terminfo`.
 * `--@postgres_config//:with_segsize`: int (default 1)
 * `--@postgres_config//:with_ssl`: One of `openssl` (default), `boringssl`, or `none`
 * `--@postgres_config//:with_wal_blocksize`: int (default 8). One of 2^{0..6}.
