@@ -264,40 +264,6 @@ _AUTOCONF_FUNCS = macros.AC_CHECK_FUNCS([
     "wcstombs_l",
 ])
 
-# Line editing. With `with_readline` these come from @readline (BCR) rather
-# than probes: the probes only see the toolchain's sysroot, not @readline's
-# headers, and a define that both produce is a duplicate-define error.
-_READLINE_PROBES = macros.AC_CHECK_HEADERS([
-    "editline/history.h",
-    "editline/readline.h",
-    "history.h",
-    "readline.h",
-    "readline/history.h",
-    "readline/readline.h",
-]) + macros.AC_CHECK_FUNCS([
-    "append_history",
-    "history_truncate_file",
-    "rl_completion_matches",
-    "rl_filename_completion_function",
-    "rl_reset_screen_size",
-    "rl_variable_bind",
-])
-
-_READLINE_DEFINES = [
-    checks.AC_DEFINE("HAVE_LIBREADLINE", "1"),
-    checks.AC_DEFINE("HAVE_READLINE_READLINE_H", "1"),
-    checks.AC_DEFINE("HAVE_READLINE_HISTORY_H", "1"),
-    checks.AC_DEFINE("HAVE_APPEND_HISTORY", "1"),
-    checks.AC_DEFINE("HAVE_HISTORY_TRUNCATE_FILE", "1"),
-    checks.AC_DEFINE("HAVE_RL_COMPLETION_MATCHES", "1"),
-    checks.AC_DEFINE("HAVE_RL_COMPLETION_SUPPRESS_QUOTE", "1"),
-    checks.AC_DEFINE("HAVE_RL_FILENAME_COMPLETION_FUNCTION", "1"),
-    checks.AC_DEFINE("HAVE_RL_FILENAME_QUOTE_CHARACTERS", "1"),
-    checks.AC_DEFINE("HAVE_RL_FILENAME_QUOTING_FUNCTION", "1"),
-    checks.AC_DEFINE("HAVE_RL_RESET_SCREEN_SIZE", "1"),
-    checks.AC_DEFINE("HAVE_RL_VARIABLE_BIND", "1"),
-]
-
 _AUTOCONF_DECLS = [
     checks.AC_CHECK_DECL(
         "strchrnul",
@@ -762,8 +728,23 @@ autoconf(
         ],
         "//conditions:default": [],
     }) + select({
-        "@postgres_config//:readline_on": _READLINE_DEFINES,
-        "//conditions:default": _READLINE_PROBES,
+        # Hardcoded, not probed: autoconf checks compile against the cc
+        # toolchain alone and never see @readline's headers.
+        "@postgres_config//:readline_on": [
+            checks.AC_DEFINE("HAVE_LIBREADLINE", "1"),
+            checks.AC_DEFINE("HAVE_READLINE_READLINE_H", "1"),
+            checks.AC_DEFINE("HAVE_READLINE_HISTORY_H", "1"),
+            checks.AC_DEFINE("HAVE_APPEND_HISTORY", "1"),
+            checks.AC_DEFINE("HAVE_HISTORY_TRUNCATE_FILE", "1"),
+            checks.AC_DEFINE("HAVE_RL_COMPLETION_MATCHES", "1"),
+            checks.AC_DEFINE("HAVE_RL_COMPLETION_SUPPRESS_QUOTE", "1"),
+            checks.AC_DEFINE("HAVE_RL_FILENAME_COMPLETION_FUNCTION", "1"),
+            checks.AC_DEFINE("HAVE_RL_FILENAME_QUOTE_CHARACTERS", "1"),
+            checks.AC_DEFINE("HAVE_RL_FILENAME_QUOTING_FUNCTION", "1"),
+            checks.AC_DEFINE("HAVE_RL_RESET_SCREEN_SIZE", "1"),
+            checks.AC_DEFINE("HAVE_RL_VARIABLE_BIND", "1"),
+        ],
+        "//conditions:default": [],
     }) + select({
         "@postgres_config//:cassert_on": [checks.AC_DEFINE("USE_ASSERT_CHECKING", "1")],
         "//conditions:default": [],

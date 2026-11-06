@@ -140,11 +140,13 @@ Available bazel flags are:
 * `--@postgres_config//:with_libcurl`: bool (default false)
 * `--@postgres_config//:with_lz4`: bool (default false)
 * `--@postgres_config//:with_pgport`: int (default 5432)
-* `--@postgres_config//:with_readline`: bool (default false). Links readline (BCR `readline`, GPL-3.0) into psql. Its BCR `ncurses` finds terminfo only in `/usr/share/terminfo`, `~/.terminfo`, `$TERMINFO` or `$TERMINFO_DIRS`; Debian and Ubuntu keep `xterm` in `/lib/terminfo`.
+* `--@postgres_config//:with_readline`: bool (default false). Links GNU readline (GPL-3.0) into `psql`.
 * `--@postgres_config//:with_segsize`: int (default 1)
 * `--@postgres_config//:with_ssl`: One of `openssl` (default), `boringssl`, or `none`
 * `--@postgres_config//:with_wal_blocksize`: int (default 8). One of 2^{0..6}.
 * `--@postgres_config//:with_zlib`: bool (default false)
 * `--@postgres_config//:with_zstd`: bool (default false)
+
+If you set `with_readline`, `psql` reads terminfo through the BCR `ncurses` module. That module looks only in `$TERMINFO`, `~/.terminfo` and `$TERMINFO_DIRS` (default `/usr/share/terminfo`). Debian 12, Ubuntu 22.04 and older releases install `xterm-256color` and other common entries in `/lib/terminfo`. If `psql` finds no entry for `$TERM`, readline does not wrap long lines and scrolls them sideways. On these releases, set `TERMINFO_DIRS=/etc/terminfo:/lib/terminfo:/usr/share/terminfo`.
 
 `pg_config.h` comes from a real `rules_cc_autoconf` probe of upstream's `pg_config.h.in`, not a hand-maintained header. See the `:autoconf_probes` target in each postgres version's root.
